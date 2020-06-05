@@ -2,7 +2,7 @@ from stable_baselines import DQN
 
 #use the saved model to form an agent
 class Agent:
-    model = DQN.load("best_model_gold_digger_lvl0.pkl")
+    model = DQN.load("best_model.pkl")
 
     def __init__(self):
         self.name = "DQNAgent"
