@@ -5,6 +5,7 @@ from stable_baselines.common.atari_wrappers import WarpFrame
 from stable_baselines import DQN  # test arbitrary agent
 from stable_baselines.results_plotter import load_results, ts2xy
 from stable_baselines.bench import Monitor
+import gym
 import numpy as np
 import argparse
 
@@ -14,7 +15,7 @@ parser.add_argument('--env', help='environment ID', type=str, default='gvgai-gol
 parser.add_argument('--seed', help='RNG seed', type=int, default=None)
 parser.add_argument('--num_timesteps', help='', type=float, default=1e7)
 parser.add_argument('--save_video_interval', help='Save video every x episodes (0 = disabled)', default=10, type=int)
-parser.add_argument('--log_path', help='Path to save log to', default='data/logs', type=str)
+parser.add_argument('--log_path', help='Path to save log to', default='logs', type=str)
 parser.add_argument('--batch_size', help='batch size for both pretraining and training', type=int, default=32)
 parser.add_argument('--buffer_size', help='experience replay buffer size', type=float, default=1e6)
 parser.add_argument('--exploration_fraction',
@@ -35,7 +36,7 @@ def callback(_locals, _globals):
   :param _globals: (dict)
   """
   global n_steps, best_mean_reward
-  # Print stats every 1000 calls
+  # Print stats every 10000 calls
   if (n_steps + 1) % 1000 == 0:
       # Evaluate policy training performance
       x, y = ts2xy(load_results(log_dir), 'timesteps')
@@ -60,10 +61,11 @@ os.makedirs(log_dir, exist_ok=True)
 
 env = gym_gvgai.make(args.env)
 env = WarpFrame(env)
+env = Monitor(env, log_dir, allow_early_resets=True)
+
 if args.save_video_interval != 0:
-    env = Monitor(env, log_dir, allow_early_resets=True, video_callable=(lambda ep: ep % args.save_video_interval == 0), force=True)
-else:
-    env = Monitor(env, log_dir, allow_early_resets=True)
+    env = gym.wrappers.Monitor(env, os.path.join(log_dir, "videos"), video_callable=(lambda ep: ep % args.save_video_interval == 0), force=True)
+
 
 model = DQN(CnnPolicy, env,
             verbose=1,
